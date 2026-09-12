@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Lantern — a gentle companion for memory, connection, and care.">
+<title>LANTERN — A Companion for Memory and Care</title>
+
+<style>
+  :root{
+    --sky:        #cce3f7;
+    --sky-deep:   #c9e7fa;
+    --blush:      #f9cbdb;
+    --blush-deep: #ffe2ec;
+    --card:       #FFFFFF;
+    --ink:        #232529;
+    --ink-soft:   #405273;
+    --gold:       #e3983c;
+    --gold-deep:  #bb833f;
+    --sage:       #82bfa0;
+    --sage-deep:  #1f6842;
+    --coral:      #ffa39c;
+    --coral-soft: #ffccc8;
+    --line:       #8e9daa;
+    --focus:      #bdceec;
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:linear-gradient(160deg, var(--sky) 0%, var(--sky) 55%, var(--blush) 100%) fixed;
+    color:var(--ink);
+    font-family:'Lantern Sans', Avenir, 'Segoe UI', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  @font-face{ font-family:'Lantern Sans'; src:local('Avenir Next'), local('Segoe UI'); }
+  h1,h2,h3,h4{ font-family:'Lantern Serif', Georgia, 'Iowan Old Style', serif; font-weight:600; color:var(--ink); margin:0 0 6px; }
+  @font-face{ font-family:'Lantern Serif'; src:local('Iowan Old Style'), local('Georgia'); }
+  p{ margin:0 0 10px; line-height:1.55; color:var(--ink-soft); }
+  button{ font-family:inherit; cursor:pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:3px solid var(--focus); outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+
+  .app{ max-width:1180px; margin:0 auto; padding:0 22px 90px; }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 0 18px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{ width:46px; height:46px; flex:none; }
+  .brand-text h1{ font-size:1.6rem; letter-spacing:1.5px; text-transform:uppercase; }
+  .brand-text p{ margin:0; font-size:.85rem; }
+
+  .mode-toggle{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; gap:4px; }
+  .mode-toggle button{ border:0; background:transparent; padding:10px 18px; border-radius:999px; font-size:.92rem; color:var(--ink-soft); font-weight:600; }
+  .mode-toggle button.active{ background:var(--sage); color:#fff; }
+
+  .greeting{ padding:8px 2px 26px; }
+  .greeting h2{ font-size:2rem; }
+  .greeting .date{ font-size:1rem; color:var(--ink-soft); }
+
+  .away-banner{ display:none; align-items:center; gap:12px; background:var(--coral-soft); border:1px solid #f0c3bd; color:#96453b; padding:14px 18px; border-radius:var(--radius-md); margin-bottom:20px; font-weight:600; }
+  .away-banner.show{ display:flex; }
+
+  .tile-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:18px; }
+  .tile{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:26px 20px; text-align:left; min-height:150px;
+    display:flex; flex-direction:column; justify-content:space-between; gap:16px; box-shadow:0 2px 0 rgba(58,63,76,.04); transition:transform .15s ease, box-shadow .15s ease; }
+  .tile:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(58,63,76,.10); }
+  .tile .icon{ width:38px; height:38px; }
+  .tile .label{ font-family:'Lantern Serif',Georgia,serif; font-size:1.2rem; font-weight:600; }
+  .tile .sub{ font-size:.85rem; color:var(--ink-soft); }
+
+  .panel{ display:none; }
+  .panel.show{ display:block; }
+  .panel-head{ display:flex; align-items:center; gap:14px; margin:6px 0 22px; }
+  .back-btn{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:10px 18px; font-weight:600; font-size:.95rem; color:var(--ink); display:flex; align-items:center; gap:8px; }
+  .panel-head h2{ font-size:1.6rem; }
+  .panel-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:26px; }
+
+  .memory-strip{ display:flex; gap:16px; overflow-x:auto; padding:6px 2px 18px; scroll-snap-type:x mandatory; }
+  .memory-frame{ flex:none; width:200px; scroll-snap-align:start; text-align:center; }
+  .memory-frame .photo{ width:200px; height:230px; border-radius:var(--radius-md); object-fit:cover; border:1px solid var(--line); background:var(--sky); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .memory-frame img{ width:100%; height:100%; object-fit:cover; }
+  .memory-frame .stage{ margin-top:10px; font-weight:700; color:var(--gold-deep); font-size:.95rem; }
+  .memory-frame .cap{ font-size:.85rem; color:var(--ink-soft); margin-top:2px; }
+
+  .big-photo-view{ text-align:center; margin-top:10px; }
+  .big-photo-view .photo{ width:min(100%,420px); height:340px; margin:0 auto; border-radius:var(--radius-lg); border:1px solid var(--line); background:var(--sky); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .big-photo-view img{ width:100%; height:100%; object-fit:cover; }
+  .big-photo-view h3{ margin-top:16px; font-size:1.4rem; }
+  .placeholder-figure{ color:var(--ink-soft); font-size:.85rem; padding:14px; text-align:center; }
+
+  .qa-card{ text-align:center; padding:10px 0 20px; }
+  .qa-question{ font-size:1.5rem; margin-bottom:22px; }
+  .qa-options{ display:grid; gap:12px; max-width:420px; margin:0 auto; }
+  .qa-options button{ border:1px solid var(--line); background:var(--sky); border-radius:var(--radius-md); padding:16px; font-size:1.05rem; font-weight:600; color:var(--ink); }
+  .qa-options button.correct{ background:#E4F0E8; border-color:var(--sage); }
+  .qa-feedback{ margin-top:18px; font-size:1.05rem; font-weight:600; color:var(--sage-deep); min-height:1.4em; }
+
+  .music-list, .med-list, .call-list, .entry-list{ display:grid; gap:12px; }
+  .music-row, .med-row, .call-row{ display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-md); background:var(--sky); }
+  .music-row .play-btn{ width:44px; height:44px; border-radius:50%; border:0; background:var(--gold); color:#fff; flex:none; font-size:1.1rem; }
+  .music-row .meta, .med-row .meta, .call-row .meta{ flex:1; }
+  .music-row .meta .t, .med-row .meta .name, .call-row .meta .name{ font-weight:700; }
+  .music-row .meta .e, .med-row .meta .time, .call-row .meta .rel{ font-size:.85rem; color:var(--ink-soft); }
+  .now-playing{ margin-top:18px; padding:16px; border-radius:var(--radius-md); background:var(--coral-soft); color:#96453b; font-weight:600; display:none; }
+  .now-playing.show{ display:block; }
+
+  .med-row.done{ background:#E4F0E8; border-color:var(--sage); }
+  .med-check{ width:30px; height:30px; border-radius:50%; border:2px solid var(--sage); background:#fff; flex:none; }
+  .med-row.done .med-check{ background:var(--sage); }
+
+  .call-row .avatar{ width:52px; height:52px; border-radius:50%; background:var(--sage); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem; flex:none; }
+  .call-btn{ border:0; background:var(--sage); color:#fff; border-radius:999px; padding:12px 20px; font-weight:700; text-decoration:none; display:inline-block; }
+  .calm-note{ margin-top:18px; padding:16px; border-radius:var(--radius-md); background:var(--sky); color:var(--ink-soft); font-size:.95rem; }
+
+  .book-page{ text-align:center; }
+  .book-page .photo{ width:min(100%,420px); height:300px; margin:0 auto 16px; border-radius:var(--radius-lg); border:1px solid var(--line); background:var(--sky); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .book-page img{ width:100%; height:100%; object-fit:cover; }
+  .book-page .story-text{ max-width:560px; margin:0 auto; font-size:1.05rem; color:var(--ink); }
+  .book-nav{ display:flex; justify-content:center; gap:14px; margin-top:20px; }
+  .book-nav button{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:10px 20px; font-weight:600; }
+
+  .fav-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:600px){ .fav-cols{ grid-template-columns:1fr; } }
+  .fav-block h3{ font-size:1.1rem; margin-bottom:10px; }
+  .fav-chip-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  .fav-chip{ background:var(--sky); border:1px solid var(--line); border-radius:999px; padding:10px 16px; font-weight:600; font-size:.95rem; }
+
+  /* mind games */
+  .games-sub{ display:grid; gap:26px; }
+  .games-sub h3{ font-size:1.2rem; }
+  .sudoku-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .sudoku-grid{ display:grid; grid-template-columns:repeat(4,64px); grid-template-rows:repeat(4,64px); gap:4px; background:var(--line); padding:4px; border-radius:var(--radius-md); }
+  .sudoku-cell{ background:var(--card); border:0; font-size:1.4rem; font-weight:700; color:var(--ink); border-radius:6px; }
+  .sudoku-cell.fixed{ background:var(--sky); color:var(--ink-soft); }
+  .sudoku-cell.selected{ outline:3px solid var(--gold); outline-offset:-3px; }
+  .sudoku-cell.correct{ background:#E4F0E8; color:var(--sage-deep); }
+  .num-pad{ display:flex; gap:10px; }
+  .num-pad button{ width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--sky); font-size:1.2rem; font-weight:700; }
+  .sudoku-msg{ font-weight:600; color:var(--sage-deep); min-height:1.4em; }
+
+  .match-grid{ display:grid; grid-template-columns:repeat(4,72px); gap:10px; justify-content:center; }
+  .match-card{ width:72px; height:72px; border-radius:12px; border:1px solid var(--line); background:var(--sky); font-size:1.7rem; display:flex; align-items:center; justify-content:center; }
+  .match-card.matched{ background:#E4F0E8; border-color:var(--sage); }
+  .match-status{ text-align:center; font-weight:600; color:var(--sage-deep); margin-top:12px; min-height:1.4em; }
+
+  /* heritage / north east */
+  .heritage-block{ margin-bottom:30px; }
+  .heritage-block h3{ font-size:1.15rem; margin-bottom:12px; }
+  .poem-card{ background:var(--sky); border:1px solid var(--line); border-radius:var(--radius-md); padding:18px 20px; margin-bottom:12px; }
+  .poem-card .poem-title{ font-weight:700; margin-bottom:6px; color:var(--gold-deep); }
+  .poem-card .poem-text{ font-style:italic; color:var(--ink); white-space:pre-line; }
+
+  /* caregiver */
+  .care-wrap{ display:none; }
+  .care-wrap.show{ display:block; }
+  .care-summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin-bottom:26px; }
+  .sum-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-md); padding:18px; }
+  .sum-card .k{ font-size:.8rem; color:var(--ink-soft); font-weight:600; }
+  .sum-card .v{ font-size:1.3rem; font-weight:700; margin-top:4px; }
+  .sum-card.warn{ border-color:var(--coral); background:var(--coral-soft); }
+  .sum-card.warn .v{ color:#96453b; }
+
+  .care-tabs{ display:flex; gap:6px; overflow-x:auto; border-bottom:1px solid var(--line); margin-bottom:22px; padding-bottom:2px; }
+  .care-tabs button{ border:0; background:transparent; padding:10px 16px; font-weight:600; color:var(--ink-soft); border-bottom:3px solid transparent; white-space:nowrap; font-size:.9rem; }
+  .care-tabs button.active{ color:var(--sage-deep); border-color:var(--sage); }
+
+  .care-panel{ display:none; }
+  .care-panel.show{ display:block; }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px){ .form-grid{ grid-template-columns:1fr; } }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.full{ grid-column:1 / -1; }
+  .field label{ font-size:.82rem; font-weight:700; color:var(--ink-soft); }
+  .field input, .field select, .field textarea{ border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; font:inherit; background:#fff; color:var(--ink); }
+  .field textarea{ min-height:70px; resize:vertical; }
+
+  .primary-btn{ border:0; background:var(--sage); color:#fff; border-radius:999px; padding:11px 22px; font-weight:700; font-size:.95rem; }
+  .ghost-btn{ border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px; padding:9px 16px; font-weight:600; font-size:.88rem; }
+
+  .entry-row{ display:flex; align-items:center; gap:14px; padding:12px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--sky); }
+  .entry-row .thumb{ width:44px; height:44px; border-radius:8px; background:var(--card); flex:none; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); }
+  .entry-row .thumb img{ width:100%; height:100%; object-fit:cover; }
+  .entry-row .main{ flex:1; min-width:0; }
+  .entry-row .main .t1{ font-weight:700; font-size:.95rem; }
+  .entry-row .main .t2{ font-size:.82rem; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .remove-btn{ border:0; background:transparent; color:#96453b; font-weight:700; font-size:.85rem; }
+
+  .section-title{ margin-bottom:4px; }
+  .section-help{ margin-bottom:18px; }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .toggle-row:last-child{ border-bottom:0; }
+  .switch{ position:relative; width:48px; height:26px; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{ position:absolute; inset:0; background:var(--line); border-radius:999px; transition:.15s; }
+  .switch .track::before{ content:''; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.15s; box-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .switch input:checked + .track{ background:var(--sage); }
+  .switch input:checked + .track::before{ transform:translateX(22px); }
+
+  footer{ text-align:center; padding:30px 0 10px; color:var(--ink-soft); font-size:.82rem; }
+
+  /* Ram assistant */
+  .ram-fab{ position:fixed; right:22px; bottom:22px; width:64px; height:64px; border-radius:50%; background:var(--gold); border:0; box-shadow:0 8px 20px rgba(58,63,76,.25); z-index:60; display:flex; align-items:center; justify-content:center; }
+  .ram-fab svg{ width:32px; height:32px; }
+  .ram-panel{ position:fixed; right:22px; bottom:98px; width:330px; max-width:88vw; max-height:72vh; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:0 24px 55px rgba(58,63,76,.25); z-index:60; display:none; flex-direction:column; overflow:hidden; }
+  .ram-panel.show{ display:flex; }
+  .ram-head{ background:var(--sage); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  .ram-head strong{ display:block; font-size:.98rem; }
+  .ram-head span{ font-size:.78rem; opacity:.9; }
+  .ram-head .x{ margin-left:auto; background:transparent; border:0; color:#fff; font-size:1.2rem; line-height:1; }
+  .ram-body{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+  .ram-msg{ background:var(--sky); padding:10px 12px; border-radius:12px; font-size:.88rem; max-width:88%; align-self:flex-start; }
+  .ram-msg.user{ align-self:flex-end; background:var(--blush); }
+  .ram-msg a.ram-action{ display:inline-block; margin-top:8px; background:var(--gold); color:#fff; padding:7px 12px; border-radius:999px; font-weight:700; font-size:.8rem; text-decoration:none; }
+  .ram-chips{ display:flex; flex-wrap:wrap; gap:8px; padding:0 16px 12px; }
+  .ram-chip{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:7px 12px; font-size:.78rem; font-weight:600; color:var(--ink); }
+  .ram-input-row{ display:flex; gap:8px; padding:12px 16px; border-top:1px solid var(--line); }
+  .ram-input-row input{ flex:1; border:1px solid var(--line); border-radius:999px; padding:9px 14px; font:inherit; }
+  .ram-input-row button{ border:0; background:var(--gold); color:#fff; border-radius:999px; padding:9px 16px; font-weight:700; }
+
+  /* ================= "LIFT" MICRO-INTERACTIONS ================= */
+  /* Touch-friendly press feedback — works on tap (:active) as well as hover, so it feels alive on phones/tablets, not just desktop mice. */
+  button, a.call-btn, .tile{
+    transition: transform .16s cubic-bezier(.2,.8,.3,1.4), box-shadow .16s ease, background-color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active, a.call-btn:active{ transform: translateY(-2px) scale(.97); }
+  .tile:active{ transform: translateY(-5px) scale(.98); box-shadow:0 16px 30px rgba(58,63,76,.16); }
+  .mode-toggle button:active, .care-tabs button:active{ transform: scale(.95); }
+  .primary-btn:hover, .ghost-btn:hover, .back-btn:hover, .call-btn:hover{ box-shadow:0 8px 18px rgba(58,63,76,.14); transform:translateY(-2px); }
+  .primary-btn:active, .ghost-btn:active, .back-btn:active, .call-btn:active{ box-shadow:0 3px 8px rgba(58,63,76,.18); }
+  .sum-card, .poem-card, .music-row, .med-row, .call-row, .entry-row, .panel-card{
+    transition: transform .16s ease, box-shadow .16s ease;
+  }
+  .sum-card:hover, .poem-card:hover, .music-row:hover, .med-row:hover, .call-row:hover{
+    transform: translateY(-2px); box-shadow:0 10px 20px rgba(58,63,76,.08);
+  }
+  .ram-fab{ transition: transform .18s cubic-bezier(.2,.8,.3,1.4), box-shadow .18s ease; }
+  .ram-fab:hover{ transform: translateY(-3px) scale(1.05); box-shadow:0 14px 28px rgba(58,63,76,.32); }
+  .ram-fab:active{ transform: translateY(-1px) scale(.94); }
+  .qa-options button:hover{ background:var(--card); box-shadow:0 8px 16px rgba(58,63,76,.10); transform:translateY(-2px); }
+  .sudoku-cell:not(.fixed):hover{ box-shadow:inset 0 0 0 2px var(--gold); }
+  .match-card:hover{ transform:translateY(-3px); box-shadow:0 8px 16px rgba(58,63,76,.12); }
+
+  @keyframes lanternFadeIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+  .panel.show .panel-card{ animation: lanternFadeIn .35s ease; }
+  .tile-grid .tile{ animation: lanternFadeIn .4s ease backwards; }
+  .tile-grid .tile:nth-child(1){ animation-delay:.02s; } .tile-grid .tile:nth-child(2){ animation-delay:.06s; }
+  .tile-grid .tile:nth-child(3){ animation-delay:.10s; } .tile-grid .tile:nth-child(4){ animation-delay:.14s; }
+  .tile-grid .tile:nth-child(5){ animation-delay:.18s; } .tile-grid .tile:nth-child(6){ animation-delay:.22s; }
+  .tile-grid .tile:nth-child(7){ animation-delay:.26s; } .tile-grid .tile:nth-child(8){ animation-delay:.30s; }
+  .tile-grid .tile:nth-child(9){ animation-delay:.34s; }
+
+  /* language switcher */
+  .lang-select{ border:1px solid var(--line); background:var(--card); border-radius:999px; padding:10px 14px; font:inherit; font-weight:600; font-size:.9rem; color:var(--ink); }
+
+  /* live map */
+  .map-frame{ width:100%; height:260px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--line); margin-top:16px; background:var(--sky); }
+  .map-frame iframe{ width:100%; height:100%; border:0; display:block; }
+  .map-empty{ display:flex; align-items:center; justify-content:center; height:100%; color:var(--ink-soft); font-size:.9rem; text-align:center; padding:16px; }
+
+  /* word puzzle game */
+  .word-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .word-slots{ display:flex; gap:8px; justify-content:center; }
+  .word-slot{ width:46px; height:54px; border:2px solid var(--line); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.35rem; font-weight:700; background:var(--sky); color:var(--ink); }
+  .word-slot.filled{ border-color:var(--gold); background:var(--card); }
+  .word-pad{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:340px; }
+  .word-pad button{ width:48px; height:48px; border-radius:12px; border:1px solid var(--line); background:var(--sky); font-size:1.2rem; font-weight:700; color:var(--ink); }
+  .word-pad button.used{ opacity:.3; pointer-events:none; }
+  .word-hint{ font-size:.85rem; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= TOP BAR ================= -->
+  <div class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="lanternGlow" cx="50%" cy="42%" r="60%">
+            <stop offset="0%" stop-color="#FFF3D9" stop-opacity="1"/>
+            <stop offset="55%" stop-color="#FDEAF1" stop-opacity=".9"/>
+            <stop offset="100%" stop-color="#E6F2FC" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="lanternBody" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#F3B15E"/>
+            <stop offset="100%" stop-color="#B97D34"/>
+          </linearGradient>
+        </defs>
+        <circle cx="24" cy="24" r="22" fill="url(#lanternGlow)"/>
+        <path d="M20 6h8v4h-8z" fill="#B97D34"/>
+        <path d="M24 4v4" stroke="#B97D34" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M15 12c0-2.2 4-3.6 9-3.6s9 1.4 9 3.6-4 3.6-9 3.6-9-1.4-9-3.6Z" fill="#DA9A4C"/>
+        <path d="M14.5 15h19l-2.2 18.5c-.3 2.6-3.4 4.5-7.3 4.5s-7-1.9-7.3-4.5L14.5 15Z" fill="url(#lanternBody)" stroke="#96622A" stroke-width="1"/>
+        <path d="M18 15l1.6 18.7M24 15v19M30 15l-1.6 18.7" stroke="#96622A" stroke-width="1" opacity=".55"/>
+        <ellipse cx="24" cy="24" rx="5" ry="6.5" fill="#FFE9B8" opacity=".9"/>
+        <path d="M24 20c1.6 1.6 2.4 3 2.4 4.4A2.4 2.4 0 0 1 24 26.8a2.4 2.4 0 0 1-2.4-2.4c0-1.4.8-2.8 2.4-4.4Z" fill="#DA9A4C"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Lantern</h1>
+        <p data-i18n="tagline">A gentle companion for memory, connection, and care</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <select class="lang-select" id="langSelect" onchange="setLanguage(this.value)" aria-label="Choose language">
+        <option value="en">English</option>
+        <option value="hi">हिंदी (Hindi)</option>
+        <option value="as">অসমীয়া (Assamese)</option>
+      </select>
+      <div class="mode-toggle" role="tablist" aria-label="Choose a view">
+        <button id="btnPatientMode" class="active" onclick="setMode('patient')" role="tab" aria-selected="true" data-i18n="patientViewBtn">Patient view</button>
+        <button id="btnCareMode" onclick="setMode('care')" role="tab" aria-selected="false" data-i18n="careViewBtn">Family &amp; caregiver view</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PATIENT VIEW ================= -->
+  <div id="patientView">
+
+    <div id="patientHome">
+      <div class="greeting">
+        <h2 id="greetingText">Good day, Kamla</h2>
+        <p class="date" id="dateText"></p>
+      </div>
+
+      <div id="awayBanner" class="away-banner">
+        <span data-i18n="awayBannerText">It looks like you may be away from home. Would you like us to let your family know you're okay?</span>
+      </div>
+
+      <div class="tile-grid">
+        <button class="tile" onclick="openPanel('photos')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="15" rx="2" stroke="#DA9A4C" stroke-width="1.6"/><circle cx="8.5" cy="9.5" r="1.7" stroke="#DA9A4C" stroke-width="1.6"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke="#DA9A4C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><div class="label" data-i18n="tilePhotosLabel">Our Photos</div><div class="sub" data-i18n="tilePhotosSub">See your family, then and now</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('qa')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 17.5v.01M9.5 9.2a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2-2.4 3.6" stroke="#6FA98B" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#6FA98B" stroke-width="1.6"/></svg>
+          <div><div class="label" data-i18n="tileQaLabel">Remember With Me</div><div class="sub" data-i18n="tileQaSub">Gentle questions about people you love</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('music')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M9 18V6l11-2v12" stroke="#DA9A4C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.5" stroke="#DA9A4C" stroke-width="1.6"/><circle cx="17.5" cy="16" r="2.5" stroke="#DA9A4C" stroke-width="1.6"/></svg>
+          <div><div class="label" data-i18n="tileMusicLabel">Music From Your Time</div><div class="sub" data-i18n="tileMusicSub">Songs you've always loved</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('meds')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#6FA98B" stroke-width="1.6"/><path d="M12 8v8M8 12h8" stroke="#6FA98B" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div><div class="label" data-i18n="tileMedsLabel">Time For Medicine</div><div class="sub" data-i18n="tileMedsSub">Today's reminders</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('call')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M6 4c1 3 2 4 3 5-1 1-1.5 1.5-1 2.5C9 14 10 15 12.5 16.5c1 .5 1.5 0 2.5-1 1 1 2 2 5 3-0 2-2 3-4 3-6 0-13-7-13-13 0-2 1-4 3-4Z" stroke="#E38C86" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div><div class="label" data-i18n="tileCallLabel">Call Someone You Love</div><div class="sub" data-i18n="tileCallSub">They're always glad to hear from you</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('book')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C6 4.5 9 4.5 11 5.5v13c-2-1-5-1-7 0v-13Z" stroke="#DA9A4C" stroke-width="1.6" stroke-linejoin="round"/><path d="M20 5.5C18 4.5 15 4.5 13 5.5v13c2-1 5-1 7 0v-13Z" stroke="#DA9A4C" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div><div class="label" data-i18n="tileBookLabel">Our Story Book</div><div class="sub" data-i18n="tileBookSub">Memories, in your own words</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('favorites')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.3-8.7C1.3 8.1 3 5 6.2 5c1.9 0 3.3 1 4 2.3.9-1.3 2.3-2.3 4.2-2.3 3.2 0 4.9 3.1 3.5 6.3C20.6 15.6 12 20 12 20Z" stroke="#E38C86" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div><div class="label" data-i18n="tileFavLabel">Favorite Things</div><div class="sub" data-i18n="tileFavSub">Food and games you enjoy</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('games')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="#DA9A4C" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="#6FA98B" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="#6FA98B" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="#DA9A4C" stroke-width="1.6"/></svg>
+          <div><div class="label" data-i18n="tileGamesLabel">Mind Games</div><div class="sub" data-i18n="tileGamesSub">Sudoku, matching, words &amp; letters</div></div>
+        </button>
+
+        <button class="tile" onclick="openPanel('roots')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M2 18l5-8 4 5 3-4 8 7" stroke="#6FA98B" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="17" cy="6" r="2.2" stroke="#DA9A4C" stroke-width="1.6"/></svg>
+          <div><div class="label" data-i18n="tileCultureLabel">Culture</div><div class="sub" data-i18n="tileCultureSub">Your tribe's photos, songs &amp; poems</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Photos panel -->
+    <div id="panel-photos" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tilePhotosLabel">Our Photos</h2></div>
+      <div class="panel-card">
+        <p data-i18n="photosIntro">A little journey through the years — tap any photo to see it larger.</p>
+        <div class="memory-strip" id="memoryStrip"></div>
+        <div class="big-photo-view" id="bigPhotoView"></div>
+      </div>
+    </div>
+
+    <!-- Q&A panel -->
+    <div id="panel-qa" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileQaLabel">Remember With Me</h2></div>
+      <div class="panel-card qa-card" id="qaCard"></div>
+    </div>
+
+    <!-- Music panel -->
+    <div id="panel-music" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileMusicLabel">Music From Your Time</h2></div>
+      <div class="panel-card">
+        <p data-i18n="musicIntro">Songs your family added, just for you.</p>
+        <div class="music-list" id="musicList"></div>
+        <div class="now-playing" id="nowPlaying"></div>
+      </div>
+    </div>
+
+    <!-- Meds panel -->
+    <div id="panel-meds" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileMedsLabel">Time For Medicine</h2></div>
+      <div class="panel-card">
+        <p data-i18n="medsIntro">Tap a circle once you've taken it — your family will see it too.</p>
+        <div class="med-list" id="medList"></div>
+      </div>
+    </div>
+
+    <!-- Call panel -->
+    <div id="panel-call" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileCallLabel">Call Someone You Love</h2></div>
+      <div class="panel-card">
+        <p data-i18n="callIntro">Feeling a lot right now? Talking to someone close often helps.</p>
+        <div class="call-list" id="callList"></div>
+        <div class="calm-note" data-i18n="calmNote">Take a slow breath. You are safe, and the people below are always happy to hear your voice.</div>
+      </div>
+    </div>
+
+    <!-- Book panel -->
+    <div id="panel-book" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileBookLabel">Our Story Book</h2></div>
+      <div class="panel-card">
+        <div class="book-page" id="bookPage"></div>
+        <div class="book-nav">
+          <button class="ghost-btn" onclick="turnPage(-1)" data-i18n="prevPage">← Previous page</button>
+          <button class="ghost-btn" onclick="turnPage(1)" data-i18n="nextPage">Next page →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favorites panel -->
+    <div id="panel-favorites" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileFavLabel">Favorite Things</h2></div>
+      <div class="panel-card">
+        <div class="fav-cols">
+          <div class="fav-block"><h3 data-i18n="favFoodHeading">Foods you love</h3><div class="fav-chip-row" id="favFood"></div></div>
+          <div class="fav-block"><h3 data-i18n="favGamesHeading">Games you enjoy</h3><div class="fav-chip-row" id="favGames"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mind Games panel -->
+    <div id="panel-games" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileGamesLabel">Mind Games</h2></div>
+      <div class="panel-card">
+        <div class="games-sub">
+          <div>
+            <h3 data-i18n="sudokuTitle">Easy Number Puzzle</h3>
+            <p data-i18n="sudokuIntro">Fill in the missing numbers so each row, column and box has 1 to 4.</p>
+            <div class="sudoku-wrap">
+              <div class="sudoku-grid" id="sudokuGrid"></div>
+              <div class="num-pad" id="sudokuPad"></div>
+              <button class="primary-btn" onclick="checkSudoku()" data-i18n="checkAnswers">Check my answers</button>
+              <div class="sudoku-msg" id="sudokuMsg"></div>
+            </div>
+          </div>
+          <div>
+            <h3 data-i18n="matchTitle">Matching Game</h3>
+            <p data-i18n="matchIntro">Tap two cards to find the pairs.</p>
+            <div class="match-grid" id="matchGrid"></div>
+            <div class="match-status" id="matchStatus"></div>
+          </div>
+          <div>
+            <h3 data-i18n="wordTitle">Word Puzzle</h3>
+            <p data-i18n="wordIntro">Tap the letters in order to spell the word.</p>
+            <div class="word-wrap">
+              <div class="word-slots" id="wordSlots"></div>
+              <div class="word-pad" id="wordPad"></div>
+              <div class="word-hint" id="wordHint"></div>
+              <div style="display:flex; gap:10px; margin-top:6px;">
+                <button class="ghost-btn" onclick="clearWord()" data-i18n="clearWord">Clear</button>
+                <button class="primary-btn" onclick="checkWord()" data-i18n="checkWord">Check my word</button>
+              </div>
+              <div class="sudoku-msg" id="wordMsg"></div>
+            </div>
+          </div>
+          <div>
+            <h3 data-i18n="alphaTitle">Alphabet Recognition</h3>
+            <p data-i18n="alphaIntro">Which letter do you see?</p>
+            <div class="qa-card" style="padding:0 0 6px">
+              <div class="qa-question" id="alphaLetter" style="font-size:3.2rem"></div>
+              <div class="qa-options" id="alphaOptions"></div>
+              <div class="qa-feedback" id="alphaFeedback"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Culture panel -->
+    <div id="panel-roots" class="panel">
+      <div class="panel-head"><button class="back-btn" onclick="closePanel()" data-i18n="backHome">← Home</button><h2 data-i18n="tileCultureLabel">Culture</h2></div>
+      <div class="panel-card">
+        <div class="heritage-block">
+          <h3 data-i18n="culturePhotosHeading">Tribe photos</h3>
+          <div class="memory-strip" id="heritagePhotoStrip"></div>
+        </div>
+        <div class="heritage-block">
+          <h3 data-i18n="cultureSongsHeading">Tribe songs</h3>
+          <div class="music-list" id="heritageSongList"></div>
+        </div>
+        <div class="heritage-block">
+          <h3 data-i18n="culturePoemsHeading">Poems &amp; sayings</h3>
+          <div id="poemList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= CAREGIVER VIEW ================= -->
+  <div id="careView" class="care-wrap">
+
+    <div class="care-summary" id="careSummary"></div>
+
+    <div class="care-tabs" role="tablist" aria-label="Caregiver sections">
+      <button class="active" onclick="setCareTab('profile')">Profile &amp; story</button>
+      <button onclick="setCareTab('photos')">Photos &amp; memory book</button>
+      <button onclick="setCareTab('medicines')">Medicines</button>
+      <button onclick="setCareTab('contacts')">Emergency contacts</button>
+      <button onclick="setCareTab('music')">Music</button>
+      <button onclick="setCareTab('qa')">Memory questions</button>
+      <button onclick="setCareTab('favorites')">Favorites</button>
+      <button onclick="setCareTab('roots')">Culture</button>
+      <button onclick="setCareTab('safety')">Location &amp; safety</button>
+    </div>
+
+    <!-- Profile & story -->
+    <div class="care-panel show" id="care-profile">
+      <h3 class="section-title">Personal information</h3>
+      <p class="section-help">This helps Lantern speak to your loved one the way people who know them do.</p>
+      <div class="form-grid">
+        <div class="field"><label for="pf-name">Name</label><input id="pf-name"></div>
+        <div class="field"><label for="pf-birthplace">Where they grew up</label><input id="pf-birthplace"></div>
+        <div class="field"><label for="pf-work">Where they used to work</label><input id="pf-work"></div>
+        <div class="field"><label for="pf-family">Immediate family</label><input id="pf-family" placeholder="e.g. son Arjun, granddaughter Meher"></div>
+        <div class="field full"><label for="pf-notes">Things they often talk about</label><textarea id="pf-notes"></textarea></div>
+      </div>
+      <button class="primary-btn" style="margin-top:16px" onclick="saveProfile()">Save profile</button>
+
+      <h3 class="section-title" style="margin-top:32px">Old stories they've shared</h3>
+      <p class="section-help">Add stories your loved one used to tell — they'll appear in the Story Book.</p>
+      <div class="form-grid">
+        <div class="field full"><label for="story-title">Story title</label><input id="story-title" placeholder="e.g. Meeting Grandpa at the train station"></div>
+        <div class="field full"><label for="story-text">The story</label><textarea id="story-text"></textarea></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addStory()">Add story</button>
+      <div class="entry-list" id="storyEntries"></div>
+    </div>
+
+    <!-- Photos & memory book -->
+    <div class="care-panel" id="care-photos">
+      <h3 class="section-title">Photo timeline</h3>
+      <p class="section-help">Upload photos from childhood through today so your loved one can see the whole journey.</p>
+      <div class="form-grid">
+        <div class="field"><label for="photo-file">Photo</label><input id="photo-file" type="file" accept="image/*"></div>
+        <div class="field"><label for="photo-stage">Life stage</label><input id="photo-stage" placeholder="e.g. Age 6, Wedding day, Today"></div>
+        <div class="field full"><label for="photo-caption">Caption</label><input id="photo-caption" placeholder="e.g. Your son Arjun's first day of school"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addPhoto()">Add photo</button>
+      <div class="entry-list" id="photoEntries"></div>
+    </div>
+
+    <!-- Medicines -->
+    <div class="care-panel" id="care-medicines">
+      <h3 class="section-title">Medicine reminders</h3>
+      <p class="section-help">Set what to take and when — Lantern will remind your loved one and log when they confirm.</p>
+      <div class="form-grid">
+        <div class="field"><label for="med-name">Medicine name</label><input id="med-name" placeholder="e.g. Blood pressure tablet"></div>
+        <div class="field"><label for="med-time">Time</label><input id="med-time" type="time"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addMed()">Add reminder</button>
+      <div class="entry-list" id="medEntries"></div>
+    </div>
+
+    <!-- Emergency contacts -->
+    <div class="care-panel" id="care-contacts">
+      <h3 class="section-title">People to call</h3>
+      <p class="section-help">If your loved one feels overwhelmed, Lantern offers to call the people listed here.</p>
+      <div class="form-grid">
+        <div class="field"><label for="c-name">Name</label><input id="c-name"></div>
+        <div class="field"><label for="c-rel">Relationship</label><input id="c-rel" placeholder="e.g. Daughter"></div>
+        <div class="field"><label for="c-phone">Phone number</label><input id="c-phone" type="tel"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addContact()">Add contact</button>
+      <div class="entry-list" id="contactEntries"></div>
+    </div>
+
+    <!-- Music -->
+    <div class="care-panel" id="care-music">
+      <h3 class="section-title">Music they've always loved</h3>
+      <p class="section-help">Songs from their younger years often bring back strong, happy memories.</p>
+      <div class="form-grid">
+        <div class="field"><label for="m-title">Song title</label><input id="m-title"></div>
+        <div class="field"><label for="m-era">Why it matters</label><input id="m-era" placeholder="e.g. Their wedding song, 1978"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addSong()">Add song</button>
+      <div class="entry-list" id="musicEntries"></div>
+    </div>
+
+    <!-- QA -->
+    <div class="care-panel" id="care-qa">
+      <h3 class="section-title">Memory questions</h3>
+      <p class="section-help">Lantern only ever responds warmly — there are no "wrong answers" shown to your loved one.</p>
+      <div class="form-grid">
+        <div class="field full"><label for="q-text">Question</label><input id="q-text" placeholder="e.g. What is your grandson's name?"></div>
+        <div class="field"><label for="q-correct">Correct answer</label><input id="q-correct"></div>
+        <div class="field"><label for="q-wrong1">Other option</label><input id="q-wrong1"></div>
+        <div class="field"><label for="q-wrong2">Other option</label><input id="q-wrong2"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addQuestion()">Add question</button>
+      <div class="entry-list" id="qaEntries"></div>
+    </div>
+
+    <!-- Favorites -->
+    <div class="care-panel" id="care-favorites">
+      <h3 class="section-title">Favorite food &amp; games</h3>
+      <p class="section-help">Lantern gently suggests these through the day to encourage a good appetite and an active mind.</p>
+      <div class="form-grid">
+        <div class="field"><label for="fav-food">Favorite food</label><input id="fav-food" placeholder="e.g. Rava idli"></div>
+        <div class="field"><label for="fav-game">Favorite game</label><input id="fav-game" placeholder="e.g. Carrom"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addFavorites()">Add</button>
+      <div class="entry-list" id="favEntries"></div>
+    </div>
+
+    <!-- Culture -->
+    <div class="care-panel" id="care-roots">
+      <h3 class="section-title">Tribe photos</h3>
+      <p class="section-help">Add photos of the village, festivals, or landscapes your loved one grew up with.</p>
+      <div class="form-grid">
+        <div class="field"><label for="rp-file">Photo</label><input id="rp-file" type="file" accept="image/*"></div>
+        <div class="field full"><label for="rp-caption">Caption</label><input id="rp-caption" placeholder="e.g. The hills near your childhood home"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addHeritagePhoto()">Add photo</button>
+      <div class="entry-list" id="heritagePhotoEntries"></div>
+
+      <h3 class="section-title" style="margin-top:32px">Tribe songs</h3>
+      <p class="section-help">Add the folk songs your loved one grew up singing.</p>
+      <div class="form-grid">
+        <div class="field"><label for="rs-title">Song title</label><input id="rs-title"></div>
+        <div class="field"><label for="rs-note">Why it matters</label><input id="rs-note" placeholder="e.g. Sung during Bihu, or a lullaby from home"></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addHeritageSong()">Add song</button>
+      <div class="entry-list" id="heritageSongEntries"></div>
+
+      <h3 class="section-title" style="margin-top:32px">Poems &amp; sayings</h3>
+      <p class="section-help">Add a poem, proverb or saying in your loved one's own words or language.</p>
+      <div class="form-grid">
+        <div class="field full"><label for="rp-title">Title</label><input id="rp-title"></div>
+        <div class="field full"><label for="rp-text">Poem or saying</label><textarea id="rp-text"></textarea></div>
+      </div>
+      <button class="primary-btn" style="margin-top:12px" onclick="addPoem()">Add poem</button>
+      <div class="entry-list" id="poemEntries"></div>
+    </div>
+
+    <!-- Safety -->
+    <div class="care-panel" id="care-safety">
+      <h3 class="section-title">Location &amp; safety</h3>
+      <p class="section-help">If your loved one leaves the home area, you and the contacts above are notified right away.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Home location</label>
+          <button class="ghost-btn" onclick="setHomeLocation()">Set current location as home</button>
+        </div>
+        <div class="field">
+          <label for="away-threshold">Alert distance (metres)</label>
+          <input id="away-threshold" type="number" value="300" min="50" step="50" onchange="state.awayThreshold=Number(this.value)||300">
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div><strong>Start live location tracking</strong><p style="margin:2px 0 0">Uses this device's real GPS while Lantern is open.</p></div>
+        <label class="switch"><input type="checkbox" id="liveTrackToggle" onchange="toggleLiveTracking()"><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><strong>Simulate: mark as away from home</strong><p style="margin:2px 0 0">For demo purposes — trigger the away alert without leaving.</p></div>
+        <label class="switch"><input type="checkbox" id="simAwayToggle" onchange="toggleSimAway()"><span class="track"></span></label>
+      </div>
+
+      <div class="map-frame" id="liveMapWrap"><div class="map-empty">Set a home location or start live tracking to see the map here.</div></div>
+      <div class="entry-list" id="locationStatusBox" style="margin-top:18px"></div>
+    </div>
+
+  </div>
+
+  <footer>Lantern is a hackathon prototype built for reflection and demo purposes — not a substitute for medical or emergency care. Ram is a scripted demo assistant, not a live connection to any government system.</footer>
+</div>
+
+<!-- Ram assistant -->
+<button class="ram-fab" onclick="toggleRam()" aria-label="Open Ram, the family assistant">
+  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#fff" fill-opacity=".18"/><path d="M8 10.5c0-2.2 1.8-4 4-4s4 1.8 4 4v2c0 2.2-1.8 4-4 4s-4-1.8-4-4v-2Z" stroke="#fff" stroke-width="1.6"/><circle cx="10" cy="11" r="0.9" fill="#fff"/><circle cx="14" cy="11" r="0.9" fill="#fff"/></svg>
+</button>
+<div class="ram-panel" id="ramPanel">
+  <div class="ram-head">
+    <div><strong>Ram</strong><span>Your family's assistant</span></div>
+    <button class="x" onclick="toggleRam()" aria-label="Close">×</button>
+  </div>
+  <div class="ram-body" id="ramBody">
+    <div class="ram-msg">Hello, I'm Ram. I can help family members reach a government doctor, or point you to the right tab in Lantern.</div>
+  </div>
+  <div class="ram-chips">
+    <button class="ram-chip" onclick="ramQuick('Connect me to a government doctor')">Connect to a doctor</button>
+    <button class="ram-chip" onclick="ramQuick('Help with medicines')">Medicines help</button>
+    <button class="ram-chip" onclick="ramQuick('She seems anxious right now')">Feeling anxious</button>
+    <button class="ram-chip" onclick="ramQuick('What can you help with?')">What can you do?</button>
+  </div>
+  <div class="ram-input-row">
+    <input id="ramInput" type="text" placeholder="Ask Ram something…" onkeydown="if(event.key==='Enter') sendRam()">
+    <button onclick="sendRam()">Send</button>
+  </div>
+</div>
+
+<script>
+/* ================= STATE (in-memory for this session) ================= */
+const state = {
+  profile: { name:'Kamla', birthplace:'', work:'', family:'', notes:'' },
+  photos: [
+    { stage:'Age 5', caption:'Playing in the courtyard back home', img:null },
+    { stage:'Age 22', caption:'Your wedding day', img:null },
+    { stage:'Age 40', caption:'Holding your son Arjun as a baby', img:null },
+    { stage:'Today', caption:'You, this year', img:null }
+  ],
+  stories: [
+    { title:'Meeting on the train platform', text:'You always said you first met your husband while waiting for the 6pm train, and he offered you his umbrella in the rain.' }
+  ],
+  medicines: [
+    { name:'Blood pressure tablet', time:'08:00', done:false },
+    { name:'Evening vitamin', time:'20:00', done:false }
+  ],
+  contacts: [
+    { name:'Arjun', rel:'Son', phone:'+911234567890' },
+    { name:'Meher', rel:'Granddaughter', phone:'+919876543210' }
+  ],
+  music: [
+    { title:'Lag Ja Gale', era:'Your favourite from the radio, 1964' },
+    { title:'Yeh Shaam Mastani', era:'Played at your wedding reception' }
+  ],
+  questions: [
+    { q:'What is your son\'s name?', correct:'Arjun', wrong:['Rahul','Vikram'] },
+    { q:'What is your granddaughter\'s name?', correct:'Meher', wrong:['Simran','Anjali'] }
+  ],
+  favFood: ['Rava idli','Mango' ,'Palak Paneer' ],
+  favGames: ['Carrom','Cricket' , 'Snakes & Ladders' ],
+  heritagePhotos: [
+    { caption:'The hills near your childhood home', img:null }
+  ],
+  heritageSongs: [
+    { title:'A childhood folk tune', era:'The song your mother used to hum during the harvest season' }
+  ],
+  poems: [
+    { title:'Mist Over the Hills', text:'The hills wake slowly under grey mist,\nsmoke curling up from the kitchen fire.\nSomewhere a flute begins its old song,\nand home feels close again.' }
+  ],
+  bookIndex: 0,
+  qaIndex: 0,
+  isAway: false,
+  home: null,
+  currentLoc: null,
+  watchId: null,
+  awayThreshold: 300,
+  lastDistance: null
+};
+
+/* ================= MODE + PANEL ROUTING ================= */
+function setMode(mode){
+  const patient = mode === 'patient';
+  document.getElementById('patientView').style.display = patient ? 'block' : 'none';
+  document.getElementById('careView').classList.toggle('show', !patient);
+  document.getElementById('btnPatientMode').classList.toggle('active', patient);
+  document.getElementById('btnCareMode').classList.toggle('active', !patient);
+  document.getElementById('btnPatientMode').setAttribute('aria-selected', patient);
+  document.getElementById('btnCareMode').setAttribute('aria-selected', !patient);
+  if(!patient) renderCareSummary();
+}
+
+function openPanel(name){
+  document.getElementById('patientHome').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+  document.getElementById('panel-' + name).classList.add('show');
+  if(name === 'photos') renderPhotos();
+  if(name === 'qa') { state.qaIndex = 0; renderQA(); }
+  if(name === 'music') renderMusic();
+  if(name === 'meds') renderMeds();
+  if(name === 'call') renderCall();
+  if(name === 'book') { state.bookIndex = 0; renderBook(); }
+  if(name === 'favorites') renderFavorites();
+  if(name === 'games') { initSudoku(); initMatch(); initWordPuzzle(); initAlpha(); }
+  if(name === 'roots') renderHeritage();
+}
+function closePanel(){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+  document.getElementById('patientHome').style.display = 'block';
+}
+
+/* ================= GREETING ================= */
+function renderGreeting(){
+  const h = new Date().getHours();
+  const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greetingText').textContent = part + ', ' + (state.profile.name || 'friend');
+  document.getElementById('dateText').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+/* ================= PHOTOS ================= */
+function photoFrame(p){
+  return p.img ? '<img src="'+p.img+'" alt="'+p.caption+'">' : '<div class="placeholder-figure">Photo of<br>'+p.stage+'</div>';
+}
+function renderPhotos(){
+  const strip = document.getElementById('memoryStrip');
+  strip.innerHTML = state.photos.map((p,i) =>
+    '<div class="memory-frame"><button class="photo" style="border:0;padding:0;cursor:pointer;width:100%;height:100%" onclick="showBigPhoto('+i+')">'+photoFrame(p)+'</button>'+
+    '<div class="stage">'+p.stage+'</div><div class="cap">'+p.caption+'</div></div>').join('');
+  showBigPhoto(state.photos.length ? state.photos.length - 1 : 0);
+}
+function showBigPhoto(i){
+  const p = state.photos[i];
+  if(!p) return;
+  document.getElementById('bigPhotoView').innerHTML = '<div class="photo">'+photoFrame(p)+'</div><h3>'+p.stage+'</h3><p>'+p.caption+'</p>';
+}
+
+/* ================= Q&A (always warm, never "wrong") ================= */
+function renderQA(){
+  const box = document.getElementById('qaCard');
+  if(!state.questions.length){ box.innerHTML = '<p>No questions have been added yet.</p>'; return; }
+  const item = state.questions[state.qaIndex % state.questions.length];
+  const opts = [item.correct, ...item.wrong].sort(() => Math.random() - 0.5);
+  box.innerHTML =
+    '<div class="qa-question">'+item.q+'</div>'+
+    '<div class="qa-options">'+opts.map(o => '<button onclick="answerQA(this,\''+o.replace(/'/g,"\\'")+'\',\''+item.correct.replace(/'/g,"\\'")+'\')">'+o+'</button>').join('')+'</div>'+
+    '<div class="qa-feedback" id="qaFeedback"></div>';
+}
+function answerQA(btn, chosen, correct){
+  document.querySelectorAll('.qa-options button').forEach(b => b.disabled = true);
+  const fb = document.getElementById('qaFeedback');
+  if(chosen === correct){ btn.classList.add('correct'); fb.textContent = "That's right — well remembered."; }
+  else { fb.textContent = 'It\'s ' + correct + ' — a lovely person to think of.'; }
+  setTimeout(() => { state.qaIndex++; renderQA(); }, 2200);
+}
+
+/* ================= MUSIC ================= */
+function renderMusic(){
+  const list = document.getElementById('musicList');
+  if(!state.music.length){ list.innerHTML = '<p>No songs added yet.</p>'; return; }
+  list.innerHTML = state.music.map((m,i) =>
+    '<div class="music-row"><button class="play-btn" onclick="playSong('+i+')">▶</button>'+
+    '<div class="meta"><div class="t">'+m.title+'</div><div class="e">'+m.era+'</div></div></div>').join('');
+}
+function playSong(i){
+  const m = state.music[i];
+  const box = document.getElementById('nowPlaying');
+  box.textContent = 'Now playing: ' + m.title + ' — ' + m.era;
+  box.classList.add('show');
+}
+
+/* ================= MEDS ================= */
+function renderMeds(){
+  const list = document.getElementById('medList');
+  if(!state.medicines.length){ list.innerHTML = '<p>No reminders set yet.</p>'; return; }
+  list.innerHTML = state.medicines.map((m,i) =>
+    '<div class="med-row '+(m.done ? 'done':'')+'"><button class="med-check" aria-label="Mark '+m.name+' as taken" onclick="toggleMed('+i+')"></button>'+
+    '<div class="meta"><div class="name">'+m.name+'</div><div class="time">'+m.time+(m.done ? ' — taken' : '')+'</div></div></div>').join('');
+}
+function toggleMed(i){ state.medicines[i].done = !state.medicines[i].done; renderMeds(); if(document.getElementById('careView').classList.contains('show')) renderCareSummary(); }
+
+/* ================= CALL ================= */
+function renderCall(){
+  const list = document.getElementById('callList');
+  if(!state.contacts.length){ list.innerHTML = '<p>No contacts added yet.</p>'; return; }
+  list.innerHTML = state.contacts.map(c =>
+    '<div class="call-row"><div class="avatar">'+(c.name||'?')[0]+'</div>'+
+    '<div class="meta"><div class="name">'+c.name+'</div><div class="rel">'+c.rel+'</div></div>'+
+    '<a class="call-btn" href="tel:'+c.phone+'">Call</a></div>').join('');
+}
+
+/* ================= STORY BOOK ================= */
+function bookPages(){
+  const pages = [];
+  state.stories.forEach(s => pages.push({ img:null, caption:s.title, text:s.text }));
+  state.photos.forEach(p => pages.push({ img:p.img, caption:p.stage, text:p.caption }));
+  return pages;
+}
+function renderBook(){
+  const pages = bookPages();
+  const el = document.getElementById('bookPage');
+  if(!pages.length){ el.innerHTML = '<p>No pages yet — your family can add stories and photos.</p>'; return; }
+  const page = pages[state.bookIndex % pages.length];
+  el.innerHTML = '<div class="photo">'+(page.img ? '<img src="'+page.img+'">' : '<div class="placeholder-figure">'+page.caption+'</div>')+'</div><p class="story-text">'+page.text+'</p>';
+}
+function turnPage(dir){
+  const pages = bookPages();
+  if(!pages.length) return;
+  state.bookIndex = (state.bookIndex + dir + pages.length) % pages.length;
+  renderBook();
+}
+
+/* ================= FAVORITES ================= */
+function renderFavorites(){
+  document.getElementById('favFood').innerHTML = state.favFood.map(f => '<span class="fav-chip">'+f+'</span>').join('') || '<p>None added yet.</p>';
+  document.getElementById('favGames').innerHTML = state.favGames.map(g => '<span class="fav-chip">'+g+'</span>').join('') || '<p>None added yet.</p>';
+}
+
+/* ================= MIND GAMES: SUDOKU (4x4, easy) ================= */
+const sudokuSolution = [1,2,3,4, 3,4,1,2, 2,1,4,3, 4,3,2,1];
+const sudokuBlanks = [1,3,4,10,12,15];
+let sudokuValues = {};
+let sudokuSelected = null;
+function initSudoku(){
+  sudokuValues = {}; sudokuSelected = null;
+  document.getElementById('sudokuMsg').textContent = '';
+  const grid = document.getElementById('sudokuGrid');
+  grid.innerHTML = '';
+  for(let i=0;i<16;i++){
+    const isBlank = sudokuBlanks.includes(i);
+    const cell = document.createElement('button');
+    cell.className = 'sudoku-cell' + (isBlank ? '' : ' fixed');
+    cell.textContent = isBlank ? '' : sudokuSolution[i];
+    if(isBlank){ cell.onclick = () => selectSudoku(i); cell.dataset.index = i; }
+    else { cell.disabled = true; }
+    grid.appendChild(cell);
+  }
+  const pad = document.getElementById('sudokuPad');
+  pad.innerHTML = '';
+  for(let n=1;n<=4;n++){
+    const b = document.createElement('button');
+    b.textContent = n;
+    b.onclick = () => fillSudoku(n);
+    pad.appendChild(b);
+  }
+}
+function selectSudoku(i){
+  sudokuSelected = i;
+  document.querySelectorAll('.sudoku-cell').forEach(c => c.classList.remove('selected'));
+  document.querySelector('.sudoku-cell[data-index="'+i+'"]').classList.add('selected');
+}
+function fillSudoku(n){
+  if(sudokuSelected === null) return;
+  sudokuValues[sudokuSelected] = n;
+  document.querySelector('.sudoku-cell[data-index="'+sudokuSelected+'"]').textContent = n;
+}
+function checkSudoku(){
+  let correctCount = 0;
+  sudokuBlanks.forEach(i => {
+    const cell = document.querySelector('.sudoku-cell[data-index="'+i+'"]');
+    if(sudokuValues[i] === sudokuSolution[i]){ cell.classList.add('correct'); correctCount++; }
+  });
+  const msg = document.getElementById('sudokuMsg');
+  msg.textContent = correctCount === sudokuBlanks.length ? 'Wonderful — you completed it!' : (correctCount + ' of ' + sudokuBlanks.length + ' correct so far. Take your time.');
+}
+
+/* ================= MIND GAMES: MATCHING PAIRS ================= */
+const matchSymbols = ['🌸','☀️','📖','⭐','❤️','🎵'];
+let matchState = { cards:[], flipped:[], matched:[] };
+function initMatch(){
+  const deck = [...matchSymbols, ...matchSymbols];
+  for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+  matchState = { cards:deck, flipped:[], matched:[] };
+  document.getElementById('matchStatus').textContent = '';
+  renderMatch();
+}
+function renderMatch(){
+  const grid = document.getElementById('matchGrid');
+  grid.innerHTML = matchState.cards.map((sym,i) => {
+    const shown = matchState.flipped.includes(i) || matchState.matched.includes(i);
+    return '<button class="match-card'+(matchState.matched.includes(i) ? ' matched':'')+'" onclick="flipCard('+i+')">'+(shown ? sym : '❓')+'</button>';
+  }).join('');
+}
+function flipCard(i){
+  if(matchState.flipped.length >= 2 || matchState.flipped.includes(i) || matchState.matched.includes(i)) return;
+  matchState.flipped.push(i);
+  renderMatch();
+  if(matchState.flipped.length === 2){
+    const [a,b] = matchState.flipped;
+    if(matchState.cards[a] === matchState.cards[b]){
+      matchState.matched.push(a,b);
+      matchState.flipped = [];
+      renderMatch();
+      if(matchState.matched.length === matchState.cards.length){
+        document.getElementById('matchStatus').textContent = 'All pairs found — lovely work!';
+      }
+    } else {
+      setTimeout(() => { matchState.flipped = []; renderMatch(); }, 900);
+    }
+  }
+}
+
+/* ================= MIND GAMES: WORD PUZZLE ================= */
+const wordPuzzleList = ['HOME','SUN','MOON','STAR','TREE','BIRD','LOVE','SONG','HAND','SMILE'];
+let wordState = { word:'', letters:[], picked:[], index:0 };
+function initWordPuzzle(){
+  wordState.index = 0;
+  nextWord();
+}
+function scrambled(word){
+  const arr = word.split('');
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+function nextWord(){
+  wordState.word = wordPuzzleList[wordState.index % wordPuzzleList.length];
+  wordState.letters = scrambled(wordState.word);
+  wordState.picked = [];
+  document.getElementById('wordMsg').textContent = '';
+  document.getElementById('wordHint').textContent = wordState.word.length + ' letters';
+  renderWordSlots();
+  renderWordPad();
+}
+function renderWordSlots(){
+  const el = document.getElementById('wordSlots');
+  el.innerHTML = '';
+  for(let i=0;i<wordState.word.length;i++){
+    const slot = document.createElement('div');
+    slot.className = 'word-slot' + (i < wordState.picked.length ? ' filled' : '');
+    slot.textContent = i < wordState.picked.length ? wordState.letters[wordState.picked[i]] : '';
+    el.appendChild(slot);
+  }
+}
+function renderWordPad(){
+  const pad = document.getElementById('wordPad');
+  pad.innerHTML = '';
+  wordState.letters.forEach((ch,i) => {
+    const b = document.createElement('button');
+    b.textContent = ch;
+    if(wordState.picked.includes(i)) b.classList.add('used');
+    b.onclick = () => pickWordLetter(i);
+    pad.appendChild(b);
+  });
+}
+function pickWordLetter(i){
+  if(wordState.picked.includes(i) || wordState.picked.length >= wordState.word.length) return;
+  wordState.picked.push(i);
+  renderWordSlots();
+  renderWordPad();
+}
+function clearWord(){
+  wordState.picked = [];
+  renderWordSlots();
+  renderWordPad();
+  document.getElementById('wordMsg').textContent = '';
+}
+function checkWord(){
+  const attempt = wordState.picked.map(i => wordState.letters[i]).join('');
+  const msg = document.getElementById('wordMsg');
+  if(attempt.length < wordState.word.length){
+    msg.textContent = 'Tap a letter for each space, then check again.';
+    return;
+  }
+  if(attempt === wordState.word){
+    msg.textContent = 'Wonderful — that\'s ' + wordState.word + '!';
+    setTimeout(() => { wordState.index++; nextWord(); }, 1800);
+  } else {
+    msg.textContent = 'Not quite — take your time and try again.';
+  }
+}
+
+/* ================= MIND GAMES: ALPHABET RECOGNITION ================= */
+const alphaLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+let alphaCorrect = '';
+function initAlpha(){ nextAlpha(); }
+function nextAlpha(){
+  alphaCorrect = alphaLetters[Math.floor(Math.random()*alphaLetters.length)];
+  document.getElementById('alphaLetter').textContent = alphaCorrect;
+  const distractors = alphaLetters.filter(l => l !== alphaCorrect);
+  for(let i=distractors.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [distractors[i],distractors[j]]=[distractors[j],distractors[i]]; }
+  const opts = [alphaCorrect, distractors[0], distractors[1]].sort(() => Math.random()-0.5);
+  document.getElementById('alphaOptions').innerHTML = opts.map(o =>
+    '<button onclick="answerAlpha(this,\''+o+'\')">'+o+'</button>').join('');
+  document.getElementById('alphaFeedback').textContent = '';
+}
+function answerAlpha(btn, chosen){
+  document.querySelectorAll('#alphaOptions button').forEach(b => b.disabled = true);
+  const fb = document.getElementById('alphaFeedback');
+  if(chosen === alphaCorrect){ btn.classList.add('correct'); fb.textContent = "That's right — well done!"; }
+  else { fb.textContent = 'It\'s ' + alphaCorrect + ' — good try.'; }
+  setTimeout(nextAlpha, 1800);
+}
+
+/* ================= NORTH EAST HERITAGE ================= */
+function renderHeritage(){
+  const photoStrip = document.getElementById('heritagePhotoStrip');
+  photoStrip.innerHTML = state.heritagePhotos.map(p =>
+    '<div class="memory-frame"><div class="photo">'+(p.img ? '<img src="'+p.img+'">' : '<div class="placeholder-figure">'+p.caption+'</div>')+'</div><div class="cap">'+p.caption+'</div></div>').join('') || '<p>No photos added yet.</p>';
+
+  const songList = document.getElementById('heritageSongList');
+  songList.innerHTML = state.heritageSongs.map((m,i) =>
+    '<div class="music-row"><button class="play-btn" onclick="playHeritageSong('+i+')">▶</button>'+
+    '<div class="meta"><div class="t">'+m.title+'</div><div class="e">'+m.era+'</div></div></div>').join('') || '<p>No songs added yet.</p>';
+
+  const poemList = document.getElementById('poemList');
+  poemList.innerHTML = state.poems.map(p =>
+    '<div class="poem-card"><div class="poem-title">'+p.title+'</div><div class="poem-text">'+p.text+'</div></div>').join('') || '<p>No poems added yet.</p>';
+}
+function playHeritageSong(i){
+  const m = state.heritageSongs[i];
+  const box = document.getElementById('nowPlaying');
+  if(box){ box.textContent = 'Now playing: ' + m.title + ' — ' + m.era; box.classList.add('show'); }
+}
+
+/* ================= AWAY / LOCATION BANNER ================= */
+function updateAwayBanner(){
+  document.getElementById('awayBanner').classList.toggle('show', state.isAway);
+}
+
+/* ================= CAREGIVER: SUMMARY ================= */
+function renderCareSummary(){
+  const takenCount = state.medicines.filter(m => m.done).length;
+  const box = document.getElementById('careSummary');
+  box.innerHTML =
+    '<div class="sum-card"><div class="k">Medicines today</div><div class="v">'+takenCount+' / '+state.medicines.length+' taken</div></div>'+
+    '<div class="sum-card"><div class="k">Emergency contacts</div><div class="v">'+state.contacts.length+' saved</div></div>'+
+    '<div class="sum-card"><div class="k">Story book pages</div><div class="v">'+bookPages().length+'</div></div>'+
+    '<div class="sum-card '+(state.isAway ? 'warn':'')+'"><div class="k">Location status</div><div class="v">'+(state.isAway ? 'Away from home' : 'At home')+'</div></div>';
+}
+
+/* ================= CAREGIVER: TABS ================= */
+function setCareTab(name){
+  document.querySelectorAll('.care-tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.care-panel').forEach(p => p.classList.remove('show'));
+  document.getElementById('care-' + name).classList.add('show');
+  if(name === 'roots') renderHeritageEntries();
+}
+
+/* ================= CAREGIVER: PROFILE ================= */
+function saveProfile(){
+  state.profile.name = document.getElementById('pf-name').value || state.profile.name;
+  state.profile.birthplace = document.getElementById('pf-birthplace').value;
+  state.profile.work = document.getElementById('pf-work').value;
+  state.profile.family = document.getElementById('pf-family').value;
+  state.profile.notes = document.getElementById('pf-notes').value;
+  renderGreeting();
+}
+function addStory(){
+  const title = document.getElementById('story-title').value.trim();
+  const text = document.getElementById('story-text').value.trim();
+  if(!title || !text) return;
+  state.stories.push({ title, text });
+  document.getElementById('story-title').value = '';
+  document.getElementById('story-text').value = '';
+  renderStoryEntries();
+}
+function renderStoryEntries(){
+  document.getElementById('storyEntries').innerHTML = state.stories.map((s,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+s.title+'</div><div class="t2">'+s.text+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'stories\','+i+', renderStoryEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: PHOTOS ================= */
+function addPhoto(){
+  const fileInput = document.getElementById('photo-file');
+  const stage = document.getElementById('photo-stage').value.trim() || 'Untitled';
+  const caption = document.getElementById('photo-caption').value.trim();
+  const file = fileInput.files[0];
+  const push = (imgData) => {
+    state.photos.push({ stage, caption, img: imgData || null });
+    fileInput.value = ''; document.getElementById('photo-stage').value=''; document.getElementById('photo-caption').value='';
+    renderPhotoEntries();
+  };
+  if(file){ const reader = new FileReader(); reader.onload = e => push(e.target.result); reader.readAsDataURL(file); }
+  else { push(null); }
+}
+function renderPhotoEntries(){
+  document.getElementById('photoEntries').innerHTML = state.photos.map((p,i) =>
+    '<div class="entry-row"><div class="thumb">'+(p.img ? '<img src="'+p.img+'">' : '')+'</div>'+
+    '<div class="main"><div class="t1">'+p.stage+'</div><div class="t2">'+p.caption+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'photos\','+i+', renderPhotoEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: MEDS ================= */
+function addMed(){
+  const name = document.getElementById('med-name').value.trim();
+  const time = document.getElementById('med-time').value;
+  if(!name || !time) return;
+  state.medicines.push({ name, time, done:false });
+  document.getElementById('med-name').value=''; document.getElementById('med-time').value='';
+  renderMedEntries(); renderCareSummary();
+}
+function renderMedEntries(){
+  document.getElementById('medEntries').innerHTML = state.medicines.map((m,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+m.name+'</div><div class="t2">'+m.time+(m.done ? ' — taken today':'')+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'medicines\','+i+', renderMedEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: CONTACTS ================= */
+function addContact(){
+  const name = document.getElementById('c-name').value.trim();
+  const rel = document.getElementById('c-rel').value.trim();
+  const phone = document.getElementById('c-phone').value.trim();
+  if(!name || !phone) return;
+  state.contacts.push({ name, rel, phone });
+  document.getElementById('c-name').value=''; document.getElementById('c-rel').value=''; document.getElementById('c-phone').value='';
+  renderContactEntries(); renderCareSummary();
+}
+function renderContactEntries(){
+  document.getElementById('contactEntries').innerHTML = state.contacts.map((c,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+c.name+' — '+c.rel+'</div><div class="t2">'+c.phone+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'contacts\','+i+', renderContactEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: MUSIC ================= */
+function addSong(){
+  const title = document.getElementById('m-title').value.trim();
+  const era = document.getElementById('m-era').value.trim();
+  if(!title) return;
+  state.music.push({ title, era });
+  document.getElementById('m-title').value=''; document.getElementById('m-era').value='';
+  renderMusicEntries();
+}
+function renderMusicEntries(){
+  document.getElementById('musicEntries').innerHTML = state.music.map((m,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+m.title+'</div><div class="t2">'+m.era+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'music\','+i+', renderMusicEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: QUESTIONS ================= */
+function addQuestion(){
+  const q = document.getElementById('q-text').value.trim();
+  const correct = document.getElementById('q-correct').value.trim();
+  const w1 = document.getElementById('q-wrong1').value.trim();
+  const w2 = document.getElementById('q-wrong2').value.trim();
+  if(!q || !correct || !w1 || !w2) return;
+  state.questions.push({ q, correct, wrong:[w1,w2] });
+  ['q-text','q-correct','q-wrong1','q-wrong2'].forEach(id => document.getElementById(id).value='');
+  renderQAEntries();
+}
+function renderQAEntries(){
+  document.getElementById('qaEntries').innerHTML = state.questions.map((item,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+item.q+'</div><div class="t2">Answer: '+item.correct+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'questions\','+i+', renderQAEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: FAVORITES ================= */
+function addFavorites(){
+  const f = document.getElementById('fav-food').value.trim();
+  const g = document.getElementById('fav-game').value.trim();
+  if(f) state.favFood.push(f);
+  if(g) state.favGames.push(g);
+  document.getElementById('fav-food').value=''; document.getElementById('fav-game').value='';
+  renderFavEntries();
+}
+function renderFavEntries(){
+  document.getElementById('favEntries').innerHTML =
+    state.favFood.map((f,i) => '<div class="entry-row"><div class="main"><div class="t1">'+f+'</div><div class="t2">Food</div></div><button class="remove-btn" onclick="removeItem(\'favFood\','+i+', renderFavEntries)">Remove</button></div>').join('') +
+    state.favGames.map((g,i) => '<div class="entry-row"><div class="main"><div class="t1">'+g+'</div><div class="t2">Game</div></div><button class="remove-btn" onclick="removeItem(\'favGames\','+i+', renderFavEntries)">Remove</button></div>').join('');
+}
+
+/* ================= CAREGIVER: NORTH EAST HERITAGE ================= */
+function addHeritagePhoto(){
+  const fileInput = document.getElementById('rp-file');
+  const caption = document.getElementById('rp-caption').value.trim();
+  const file = fileInput.files[0];
+  const push = (imgData) => {
+    state.heritagePhotos.push({ caption, img: imgData || null });
+    fileInput.value=''; document.getElementById('rp-caption').value='';
+    renderHeritageEntries();
+  };
+  if(file){ const reader = new FileReader(); reader.onload = e => push(e.target.result); reader.readAsDataURL(file); }
+  else { push(null); }
+}
+function addHeritageSong(){
+  const title = document.getElementById('rs-title').value.trim();
+  const note = document.getElementById('rs-note').value.trim();
+  if(!title) return;
+  state.heritageSongs.push({ title, era: note });
+  document.getElementById('rs-title').value=''; document.getElementById('rs-note').value='';
+  renderHeritageEntries();
+}
+function addPoem(){
+  const title = document.getElementById('rp-title').value.trim();
+  const text = document.getElementById('rp-text').value.trim();
+  if(!title || !text) return;
+  state.poems.push({ title, text });
+  document.getElementById('rp-title').value=''; document.getElementById('rp-text').value='';
+  renderHeritageEntries();
+}
+function renderHeritageEntries(){
+  document.getElementById('heritagePhotoEntries').innerHTML = state.heritagePhotos.map((p,i) =>
+    '<div class="entry-row"><div class="thumb">'+(p.img ? '<img src="'+p.img+'">' : '')+'</div>'+
+    '<div class="main"><div class="t1">'+p.caption+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'heritagePhotos\','+i+', renderHeritageEntries)">Remove</button></div>').join('');
+  document.getElementById('heritageSongEntries').innerHTML = state.heritageSongs.map((m,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+m.title+'</div><div class="t2">'+m.era+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'heritageSongs\','+i+', renderHeritageEntries)">Remove</button></div>').join('');
+  document.getElementById('poemEntries').innerHTML = state.poems.map((p,i) =>
+    '<div class="entry-row"><div class="main"><div class="t1">'+p.title+'</div><div class="t2">'+p.text.replace(/\n/g,' ')+'</div></div>'+
+    '<button class="remove-btn" onclick="removeItem(\'poems\','+i+', renderHeritageEntries)">Remove</button></div>').join('');
+}
+
+/* ================= GENERIC REMOVE ================= */
+function removeItem(key, i, rerender){ state[key].splice(i,1); rerender(); }
+
+/* ================= LOCATION & SAFETY (real GPS + simulate) ================= */
+function distanceMeters(lat1,lon1,lat2,lon2){
+  const R=6371000, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function setHomeLocation(){
+  if(!navigator.geolocation){ renderLocationStatus('Geolocation is not supported in this browser.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => { state.home = { lat:pos.coords.latitude, lon:pos.coords.longitude }; renderLocationStatus(); },
+    () => { renderLocationStatus('Could not get permission for location.'); }
+  );
+}
+function toggleLiveTracking(){
+  const on = document.getElementById('liveTrackToggle').checked;
+  if(on){
+    if(!navigator.geolocation){ renderLocationStatus('Geolocation is not supported in this browser.'); return; }
+    state.watchId = navigator.geolocation.watchPosition(
+      pos => { state.currentLoc = { lat:pos.coords.latitude, lon:pos.coords.longitude, t:new Date() }; evaluateLocation(); },
+      () => { renderLocationStatus('Could not get permission for live tracking.'); },
+      { enableHighAccuracy:true, maximumAge:10000 }
+    );
+  } else {
+    if(state.watchId != null && navigator.geolocation){ navigator.geolocation.clearWatch(state.watchId); }
+    state.watchId = null;
+  }
+  renderLocationStatus();
+}
+function evaluateLocation(){
+  if(state.home && state.currentLoc){
+    state.lastDistance = distanceMeters(state.home.lat, state.home.lon, state.currentLoc.lat, state.currentLoc.lon);
+    state.isAway = state.lastDistance > state.awayThreshold;
+  }
+  updateAwayBanner(); renderCareSummary(); renderLocationStatus();
+}
+function renderLocationStatus(errorMsg){
+  const box = document.getElementById('locationStatusBox');
+  if(!box) return;
+  let html = '';
+  if(errorMsg) html += '<div class="entry-row"><div class="main"><div class="t1">'+errorMsg+'</div></div></div>';
+  html += '<div class="entry-row"><div class="main"><div class="t1">Home location</div><div class="t2">'+(state.home ? state.home.lat.toFixed(4)+', '+state.home.lon.toFixed(4) : 'Not set yet')+'</div></div></div>';
+  html += '<div class="entry-row"><div class="main"><div class="t1">Live tracking</div><div class="t2">'+(state.watchId!=null ? 'On' : 'Off')+(state.currentLoc ? ' — last update '+state.currentLoc.t.toLocaleTimeString() : '')+'</div></div></div>';
+  if(state.home && state.currentLoc){
+    html += '<div class="entry-row"><div class="main"><div class="t1">Distance from home</div><div class="t2">'+Math.round(state.lastDistance)+' m — '+(state.isAway ? 'outside the safe area':'within the safe area')+'</div></div></div>';
+  }
+  box.innerHTML = html;
+  updateMapFrame();
+}
+function updateMapFrame(){
+  const wrap = document.getElementById('liveMapWrap');
+  if(!wrap) return;
+  const point = state.currentLoc || state.home;
+  if(!point){
+    wrap.innerHTML = '<div class="map-empty">Set a home location or start live tracking to see the map here.</div>';
+    return;
+  }
+  const d = 0.01;
+  const bbox = (point.lon-d)+','+(point.lat-d)+','+(point.lon+d)+','+(point.lat+d);
+  const src = 'https://www.openstreetmap.org/export/embed.html?bbox='+bbox+'&layer=mapnik&marker='+point.lat+','+point.lon;
+  wrap.innerHTML = '<iframe src="'+src+'" title="Live location map" loading="lazy"></iframe>';
+}
+function toggleSimAway(){
+  state.isAway = document.getElementById('simAwayToggle').checked;
+  updateAwayBanner(); renderCareSummary();
+}
+
+/* ================= RAM ASSISTANT ================= */
+function toggleRam(){ document.getElementById('ramPanel').classList.toggle('show'); }
+function addRamUserMsg(text){
+  const body = document.getElementById('ramBody');
+  const div = document.createElement('div');
+  div.className = 'ram-msg user';
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function addRamBotMsg(text, action){
+  const body = document.getElementById('ramBody');
+  const div = document.createElement('div');
+  div.className = 'ram-msg';
+  div.textContent = text;
+  if(action){
+    const a = document.createElement('a');
+    a.className = 'ram-action'; a.href = action.href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = action.label;
+    div.appendChild(document.createElement('br'));
+    div.appendChild(a);
+  }
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function ramQuick(text){ addRamUserMsg(text); respondRam(text); }
+function sendRam(){
+  const input = document.getElementById('ramInput');
+  const val = input.value.trim();
+  if(!val) return;
+  addRamUserMsg(val); input.value = ''; respondRam(val);
+}
+/* Ram is a scripted, rule-based demo assistant — it looks for the intent behind
+   what's typed (keywords, in any order) and answers using the real data already
+   in Lantern (profile, contacts, medicines, favourites) so replies feel personal
+   even though there's no live AI model or internet connection behind it. */
+function respondRam(text){
+  const t = ' ' + text.toLowerCase() + ' ';
+  const has = (...words) => words.some(w => t.includes(w));
+  const name = state.profile.name || 'your loved one';
+
+  // greetings
+  if(has('hello','hi ','hey','namaste','good morning','good evening','good afternoon')){
+    addRamBotMsg("Hello! I'm Ram, "+name+"'s family assistant. You can ask me about medicines, location, calling a doctor, or how "+name+" is feeling — or just tell me what's going on.");
+    return;
+  }
+  // thanks
+  if(has('thank','thanks','thank you')){
+    addRamBotMsg("You're always welcome. I'm here whenever you need me.");
+    return;
+  }
+  // who / what can you do
+  if(has('who are you','what are you','what can you do','help me','what do you do')){
+    addRamBotMsg('I can connect your family to a government doctor, remind you what\'s in the Medicines, Location, Photos, Music, Culture and Mind Games tabs, and offer a little comfort if things feel hard right now. Just tell me what\'s going on.');
+    return;
+  }
+  // doctor / medical appointment
+  if(has('doctor','appointment','portal','physician','clinic','specialist')){
+    addRamBotMsg("I can connect your family to India's National Teleconsultation Service so you can speak with a government-listed doctor.", { label:'Open the government doctor portal', href:'https://esanjeevaniopd.in' });
+    return;
+  }
+  // medicines
+  if(has('medic','tablet','pill','dose','medicine')){
+    const pending = state.medicines.filter(m => !m.done);
+    if(pending.length){
+      addRamBotMsg('There '+(pending.length===1?'is':'are')+' still '+pending.length+' medicine'+(pending.length===1?'':'s')+' to give today: '+pending.map(m=>m.name+' at '+m.time).join(', ')+'. You can add or check reminders in the Medicines tab of the caregiver view.');
+    } else {
+      addRamBotMsg("All of today's medicines are marked as taken. You can add or check reminders in the Medicines tab of the caregiver view.");
+    }
+    return;
+  }
+  // location / GPS
+  if(has('location','gps','track','where is','wandering','wander','safe area','geofence')){
+    if(state.home && state.currentLoc){
+      addRamBotMsg((state.isAway ? name+' currently looks to be outside the safe area, about '+Math.round(state.lastDistance)+' metres from home.' : name+' currently looks to be within the safe area, about '+Math.round(state.lastDistance)+' metres from home.')+' You can see the live map under Location & Safety in the caregiver view.');
+    } else {
+      addRamBotMsg('Live location, a map, and home-distance alerts are under Location & Safety in the caregiver view — set a home location and turn on live tracking there.');
+    }
+    return;
+  }
+  // emergency / urgent
+  if(has('emergency','sos','urgent','danger','help her','help him','missing','lost')){
+    const c = state.contacts[0];
+    addRamBotMsg(c ? "If this is urgent, the fastest step is to call "+c.name+' ('+c.rel+') directly, or check the live map under Location & Safety.' : 'Please add an emergency contact under the caregiver view so Lantern can point you to them quickly in moments like this.');
+    return;
+  }
+  // distress / anxious / lonely / sad / scared / crying
+  if(has('anxious','upset','distress','overwhelm','scared','afraid','crying','cry','lonely','alone','sad','confused','frightened')){
+    addRamBotMsg("Try opening 'Call Someone You Love' in the patient view — it gently offers to call the closest family member. A calm voice usually helps more than anything else right now.");
+    return;
+  }
+  // photos / memories
+  if(has('photo','picture','memory','memories','album')){
+    addRamBotMsg('Family photos live in the Our Photos and Our Story Book tabs of the patient view. Family members can add new ones from Photos & memory book in the caregiver view.');
+    return;
+  }
+  // music
+  if(has('music','song','sing','sang')){
+    const song = state.music[0];
+    addRamBotMsg(song ? 'There\'s music waiting in Music From Your Time — including "'+song.title+'". Family can add more from the Music tab.' : 'Family can add favourite songs from the Music tab of the caregiver view, and they\'ll appear in Music From Your Time.');
+    return;
+  }
+  // games / bored / fun
+  if(has('game','play','puzzle','bored','fun','sudoku','word','letter','alphabet')){
+    addRamBotMsg('Mind Games has a number puzzle, a matching game, a word puzzle, and an alphabet game — a gentle way to stay engaged for a few minutes.');
+    return;
+  }
+  // food / hungry
+  if(has('food','hungry','eat','meal','snack','lunch','dinner','breakfast')){
+    const f = state.favFood[0];
+    addRamBotMsg(f ? "Favourite foods are saved under Favorite Things — "+name+" especially loves "+f+"." : 'Family can add favourite foods under the Favorites tab of the caregiver view.');
+    return;
+  }
+  // culture / tribe / heritage
+  if(has('culture','tribe','heritage','village','festival','folk')){
+    addRamBotMsg('The Culture tab holds tribe photos, tribe songs, and poems — family members can add to it any time from the caregiver view.');
+    return;
+  }
+  // language
+  if(has('language','hindi','assamese','translate','bhasha')){
+    addRamBotMsg('You can change the site language from the dropdown at the top of the page — English, Hindi, and Assamese are available right now.');
+    return;
+  }
+  // family
+  if(has('family','son','daughter','husband','wife','grandchild','grandson','granddaughter','child','children')){
+    addRamBotMsg(state.profile.family ? name+"'s family: "+state.profile.family+'. You can update this any time under Profile & story in the caregiver view.' : 'Family details haven\'t been added yet — you can add them under Profile & story in the caregiver view.');
+    return;
+  }
+  // sleep / tired
+  if(has('sleep','tired','rest','bed','nap')){
+    addRamBotMsg("A short rest is a good idea. If it's close to bedtime, a favourite song from the Music tab can help settle in gently.");
+    return;
+  }
+  // time / date
+  if(has('time','date','today','what day')){
+    addRamBotMsg('Right now it is '+new Date().toLocaleString(undefined,{weekday:'long',hour:'numeric',minute:'2-digit',month:'long',day:'numeric'})+'.');
+    return;
+  }
+  // weather (demo limitation, honestly stated)
+  if(has('weather','rain','sunny','cold','hot outside')){
+    addRamBotMsg("I can't check real weather in this demo, but that would be a lovely feature to connect for the real app.");
+    return;
+  }
+  // fallback — friendlier, points at chips
+  addRamBotMsg("I'm Ram, a demo assistant for this prototype. I can help connect you to a government doctor, or point you to the right tab for medicines, location, music, culture, or emotional support — try one of the quick buttons below, or ask me in your own words.");
+}
+
+/* ================= LANGUAGE / i18n ================= */
+/* Translates Lantern's own interface text (tiles, headers, buttons). Content
+   your family adds — names, stories, songs, poems — stays in the language it
+   was written in, since translating personal memories automatically could
+   change their meaning. */
+const translations = {
+  en: {
+    tagline:'A gentle companion for memory, connection, and care',
+    patientViewBtn:'Patient view', careViewBtn:'Family & caregiver view',
+    awayBannerText:"It looks like you may be away from home. Would you like us to let your family know you're okay?",
+    tilePhotosLabel:'Our Photos', tilePhotosSub:'See your family, then and now',
+    tileQaLabel:'Remember With Me', tileQaSub:'Gentle questions about people you love',
+    tileMusicLabel:'Music From Your Time', tileMusicSub:"Songs you've always loved",
+    tileMedsLabel:'Time For Medicine', tileMedsSub:"Today's reminders",
+    tileCallLabel:'Call Someone You Love', tileCallSub:"They're always glad to hear from you",
+    tileBookLabel:'Our Story Book', tileBookSub:'Memories, in your own words',
+    tileFavLabel:'Favorite Things', tileFavSub:'Food and games you enjoy',
+    tileGamesLabel:'Mind Games', tileGamesSub:'Sudoku, matching, words & letters',
+    tileCultureLabel:'Culture', tileCultureSub:"Your tribe's photos, songs & poems",
+    backHome:'← Home',
+    photosIntro:'A little journey through the years — tap any photo to see it larger.',
+    musicIntro:'Songs your family added, just for you.',
+    medsIntro:"Tap a circle once you've taken it — your family will see it too.",
+    callIntro:'Feeling a lot right now? Talking to someone close often helps.',
+    calmNote:'Take a slow breath. You are safe, and the people below are always happy to hear your voice.',
+    prevPage:'← Previous page', nextPage:'Next page →',
+    favFoodHeading:'Foods you love', favGamesHeading:'Games you enjoy',
+    sudokuTitle:'Easy Number Puzzle', sudokuIntro:'Fill in the missing numbers so each row, column and box has 1 to 4.', checkAnswers:'Check my answers',
+    matchTitle:'Matching Game', matchIntro:'Tap two cards to find the pairs.',
+    wordTitle:'Word Puzzle', wordIntro:'Tap the letters in order to spell the word.', clearWord:'Clear', checkWord:'Check my word',
+    alphaTitle:'Alphabet Recognition', alphaIntro:'Which letter do you see?',
+    culturePhotosHeading:'Tribe photos', cultureSongsHeading:'Tribe songs', culturePoemsHeading:'Poems & sayings'
+  },
+  hi: {
+    tagline:'याद, जुड़ाव और देखभाल के लिए एक सहृदय साथी',
+    patientViewBtn:'मरीज़ दृश्य', careViewBtn:'परिवार व देखभालकर्ता दृश्य',
+    awayBannerText:'ऐसा लगता है कि आप घर से दूर हैं। क्या हम आपके परिवार को बता दें कि आप ठीक हैं?',
+    tilePhotosLabel:'हमारी तस्वीरें', tilePhotosSub:'अपने परिवार को तब और अब देखें',
+    tileQaLabel:'मेरे साथ याद करें', tileQaSub:'अपने प्रियजनों के बारे में सरल सवाल',
+    tileMusicLabel:'आपके समय के गीत', tileMusicSub:'वे गीत जो आपको हमेशा पसंद रहे',
+    tileMedsLabel:'दवाई का समय', tileMedsSub:'आज की याद-दिलाने वाली सूची',
+    tileCallLabel:'अपने प्रिय को फ़ोन करें', tileCallSub:'वे हमेशा आपकी आवाज़ सुनकर खुश होते हैं',
+    tileBookLabel:'हमारी कहानी की किताब', tileBookSub:'आपकी अपनी भाषा में यादें',
+    tileFavLabel:'पसंदीदा चीज़ें', tileFavSub:'भोजन और खेल जो आपको पसंद हैं',
+    tileGamesLabel:'दिमागी खेल', tileGamesSub:'सुडोकू, मिलान, शब्द और अक्षर',
+    tileCultureLabel:'संस्कृति', tileCultureSub:'आपकी जनजाति की तस्वीरें, गीत और कविताएँ',
+    backHome:'← घर',
+    photosIntro:'बीते वर्षों की एक छोटी यात्रा — बड़ा देखने के लिए किसी भी तस्वीर पर टैप करें।',
+    musicIntro:'आपके परिवार द्वारा जोड़े गए गीत, सिर्फ़ आपके लिए।',
+    medsIntro:'दवा लेने पर एक बार गोले पर टैप करें — आपका परिवार भी देख सकेगा।',
+    callIntro:'अभी बहुत कुछ महसूस हो रहा है? किसी करीबी से बात करना अक्सर मदद करता है।',
+    calmNote:'धीरे से साँस लें। आप सुरक्षित हैं, और नीचे दिए लोग हमेशा आपकी आवाज़ सुनकर खुश होंगे।',
+    prevPage:'← पिछला पन्ना', nextPage:'अगला पन्ना →',
+    favFoodHeading:'पसंदीदा भोजन', favGamesHeading:'पसंदीदा खेल',
+    sudokuTitle:'आसान अंक पहेली', sudokuIntro:'हर पंक्ति, कॉलम और बॉक्स में 1 से 4 भरें।', checkAnswers:'मेरे उत्तर जाँचें',
+    matchTitle:'मिलान खेल', matchIntro:'जोड़ी ढूँढने के लिए दो पत्ते टैप करें।',
+    wordTitle:'शब्द पहेली', wordIntro:'शब्द बनाने के लिए अक्षरों को क्रम से टैप करें।', clearWord:'मिटाएँ', checkWord:'मेरा शब्द जाँचें',
+    alphaTitle:'अक्षर पहचान', alphaIntro:'आपको कौन-सा अक्षर दिख रहा है?',
+    culturePhotosHeading:'जनजाति की तस्वीरें', cultureSongsHeading:'जनजाति के गीत', culturePoemsHeading:'कविताएँ व कहावतें'
+  },
+  as: {
+    tagline:'স্মৃতি, সংযোগ আৰু সেৱাৰ বাবে এক কোমল সঙ্গী',
+    patientViewBtn:'ৰোগীৰ দৃশ্য', careViewBtn:'পৰিয়াল ও প্ৰতিপালকৰ দৃশ্য',
+    awayBannerText:'মনে হৈছে আপুনি ঘৰৰ পৰা আঁতৰত আছে। আপোনাৰ পৰিয়ালক জনাব লাগেনে যে আপুনি ভালে আছে?',
+    tilePhotosLabel:'আমাৰ ফটো', tilePhotosSub:'আপোনাৰ পৰিয়াল তেতিয়া আৰু এতিয়া চাওক',
+    tileQaLabel:'মোৰ লগত মনত পেলাওক', tileQaSub:'আপুনি ভাল পোৱা মানুহৰ বিষয়ে সৰল প্ৰশ্ন',
+    tileMusicLabel:'আপোনাৰ সময়ৰ গীত', tileMusicSub:'আপুনি সদায় ভাল পোৱা গীত',
+    tileMedsLabel:'দৰৱৰ সময়', tileMedsSub:'আজিৰ মনত পেলোৱা তালিকা',
+    tileCallLabel:'আপোনাৰ প্ৰিয়জনক কল কৰক', tileCallSub:'তেওঁলোক সদায় আপোনাৰ কণ্ঠস্বৰ শুনি সুখী হয়',
+    tileBookLabel:'আমাৰ কাহিনীৰ কিতাপ', tileBookSub:'আপোনাৰ নিজৰ ভাষাত স্মৃতি',
+    tileFavLabel:'প্ৰিয় বস্তু', tileFavSub:'আপুনি ভাল পোৱা খাদ্য আৰু খেল',
+    tileGamesLabel:'মন-মগজুৰ খেল', tileGamesSub:'সুডোকু, মিলোৱা, শব্দ আৰু আখৰ',
+    tileCultureLabel:'সংস্কৃতি', tileCultureSub:'আপোনাৰ জনগোষ্ঠীৰ ফটো, গীত আৰু কবিতা',
+    backHome:'← ঘৰ',
+    photosIntro:'বছৰবোৰৰ মাজেৰে এক সৰু যাত্ৰা — ডাঙৰকৈ চাবলৈ যিকোনো ফটোত টিপক।',
+    musicIntro:'আপোনাৰ পৰিয়ালে যোগ কৰা গীত, কেৱল আপোনাৰ বাবে।',
+    medsIntro:'দৰৱ খোৱাৰ পিছত বৃত্তটোত টিপক — আপোনাৰ পৰিয়ালেও ইয়াক দেখিব।',
+    callIntro:'এতিয়া বহুত অনুভৱ হৈছেনে? ওচৰৰ মানুহৰ সৈতে কথা পাতিলে সহায় হয়।',
+    calmNote:'লাহে লাহে উশাহ লওক। আপুনি সুৰক্ষিত, আৰু তলৰ মানুহবোৰ সদায় আপোনাৰ কণ্ঠস্বৰ শুনি সুখী হ\'ব।',
+    prevPage:'← পূৰ্বৰ পৃষ্ঠা', nextPage:'পৰৱৰ্তী পৃষ্ঠা →',
+    favFoodHeading:'প্ৰিয় খাদ্য', favGamesHeading:'প্ৰিয় খেল',
+    sudokuTitle:'সহজ সংখ্যা ধাঁধা', sudokuIntro:'প্ৰতিটো শাৰী, স্তম্ভ আৰু বাকচত ১ৰ পৰা ৪ লিখক।', checkAnswers:'মোৰ উত্তৰ পৰীক্ষা কৰক',
+    matchTitle:'মিলোৱা খেল', matchIntro:'জোৰা বিচাৰিবলৈ দুখন কাৰ্ড টিপক।',
+    wordTitle:'শব্দ ধাঁধা', wordIntro:'শব্দটো বনাবলৈ আখৰবোৰ ক্ৰমে টিপক।', clearWord:'মচক', checkWord:'মোৰ শব্দ পৰীক্ষা কৰক',
+    alphaTitle:'আখৰ চিনাক্তকৰণ', alphaIntro:'আপুনি কোনটো আখৰ দেখিছে?',
+    culturePhotosHeading:'জনগোষ্ঠীৰ ফটো', cultureSongsHeading:'জনগোষ্ঠীৰ গীত', culturePoemsHeading:'কবিতা আৰু বচন'
+  }
+};
+function setLanguage(lang){
+  state.lang = translations[lang] ? lang : 'en';
+  const dict = translations[state.lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if(dict[key]) el.textContent = dict[key];
+  });
+  document.getElementById('langSelect').value = state.lang;
+}
+
+/* ================= INIT ================= */
+function init(){
+  renderGreeting();
+  document.getElementById('pf-name').value = state.profile.name;
+  renderStoryEntries();
+  renderPhotoEntries();
+  renderMedEntries();
+  renderContactEntries();
+  renderMusicEntries();
+  renderQAEntries();
+  renderFavEntries();
+  renderHeritageEntries();
+  renderCareSummary();
+  updateAwayBanner();
+  renderLocationStatus();
+  setLanguage('en');
+  setInterval(renderGreeting, 60000);
+}
+init();
+</script>
+</body>
+</html>
